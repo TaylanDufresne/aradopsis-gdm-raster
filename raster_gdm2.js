@@ -1203,7 +1203,7 @@ function changeGenome() {
     genomeModel.clearDisplayedGenes()
     pullInfo(chosenGenomeFile).then(dataset => {
         genomeModel = new Model(dataset)
-        if (dataset.length > 50000) {
+        if (dataset.length > 900000) {
             controller.liveUpdate = false
         }
     }).then(() => {
