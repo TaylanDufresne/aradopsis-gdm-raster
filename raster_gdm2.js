@@ -81,7 +81,10 @@ class Model {
     constructor(dataset) {
         this.displayedGenes = []
         this.dataset = dataset
-        this.chromosome = dataset[0].chromosome
+
+        this.chromosome = dataset[Object.keys(dataset)[0]]
+
+
         this.densityData = []
         this.chromosomeNameList = []
         this.viewList = []
@@ -93,20 +96,22 @@ class Model {
 
         // Scaffold information not comparable and clutters everything up
         let ignore = "Scaffold"
-        this.dataset.forEach((item) => {
-            if (!this.chromosomeNameList.some((x) => x.chromosome == item.chromosome) && !item.chromosome.includes(ignore)) {
+        for (let item in this.dataset) {
+            // this.dataset.forEach((item) => {
+            if (!this.chromosomeNameList.some((x) => x.chromosome == this.dataset[item].chromosome) && !this.dataset[item].chromosome.includes(ignore)) {
 
-                var check = item.key.toLowerCase()
+                var check = item
 
                 var temp = {
-                    chromosome: item.chromosome,
+                    chromosome: this.dataset[item].chromosome,
                     designation: check.slice(0, check.indexOf('g'))
                 }
                 // Building a list of the chromosome names, used for later finding information on that dataset
                 this.chromosomeNameList.push(temp)
             }
-        })
-
+        }
+        // )
+ 
         // Changing the default lexicographical order, since chromosome11 should come after chromosome2 
         // additional logic so that all chromosomes from the same line should be grouped   
         this.chromosomeNameList.sort((a, b) => {
@@ -121,9 +126,13 @@ class Model {
         // Building an array of useful data/functions for each chromosome
         this.chromosomalData = []
         this.chromosomeNameList.forEach((chr) => {
-            var subset = dataset.filter((d) => {
-                return d.chromosome == chr.chromosome
-            })
+            var subset = Object.entries(this.dataset).filter(d=> {
+                return d[1].chromosome == chr.chromosome
+            }).map(x=> x[1])
+            
+            // var subset = dataset.filter((d) => {
+            //     return d.chromosome == chr.chromosome
+            // })
 
             var cap = Math.max.apply(Math, subset.map((d) => {
                 return d.end
@@ -149,7 +158,7 @@ class Model {
 
         // Scales for finding the locations of things
         this.overviewScale = d3.scaleLinear().domain([0, max]).range([0, w])
-        this.reverseOverviewScale = d3.scaleLinear().domain([0, w]).range([0, this.dataset.length])
+        this.reverseOverviewScale = d3.scaleLinear().domain([0, w]).range([0, Object.keys(this.dataset).length])
 
         for (var i = 0; i < this.chromosomalData.length; i++) {
             if (i == 0) {
@@ -183,11 +192,13 @@ class Model {
     }
     setOrthologs(pairs) {
         this.orthologs = pairs
-        pairs.forEach((x=>{
-            let check = x.source.toLowerCase()
-            let index = this.dataset.findIndex(z=>z.key == check)
-            this.dataset[index].ortholog = true
-            this.dataset[index].siblings.push(x.target)
+        pairs.forEach((x => {
+            let sourceIndex = x.source.toLowerCase()
+            let targetIndex = x.target.toLowerCase()
+            this.dataset[sourceIndex].ortholog = true
+            this.dataset[targetIndex].ortholog = true
+            this.dataset[sourceIndex].siblings.push(x.target)
+            this.dataset[targetIndex].siblings.push(x.source)
         }))
     }
     getOrthologs() {
@@ -249,14 +260,8 @@ class Model {
         this.viewList[index].update()
     }
     searchForGene(query) {
-        query = query.toLowerCase()
-        var index = this.dataset.findIndex((x, y) => {
-            if (x.key == query) {
-                return true
-            }
-        })
-        if (index > 0) {
-
+        let index = query.toLowerCase()
+        if (this.dataset[index] != undefined) {
             var queryInfo = this.dataset[index]
             var queryChromosomalData = this.chromosomalData[this.chromosomalData.findIndex((d) => { return d.key.chromosome == queryInfo.chromosome })]
             var querySubset = queryChromosomalData.data
@@ -275,7 +280,7 @@ class Model {
                 chromosomeData: querySubset,
                 index: subsetIndex,
                 key: query,
-                start: dataset[index].start
+                start: this.dataset[index].start
             }
             return geneLocation
         }
@@ -345,27 +350,78 @@ function pullInfo(genomeFile) {
     return d3.text(genomeFile)
         .then(function (data) {
             temporary = data.split(/\n/)
-            dataset = []
+            // dataset = []
             savedDensityData = []
-            dataset = temporary.map(function (d) {
+
+            let dataset = {}
+            temporary.forEach(d=>{
                 info = d.split('\t')
+                // console.log(info)
                 if (info.length > 1) {
-                    var template = {
+                    let key = info[1].toLowerCase()
+                    var stats = {
                         chromosome: info[0],
                         start: info[2],
                         end: info[3],
-                        key: info[1].toLowerCase(),
+                        key: key,
                         ortholog: false,
                         siblings: [],
                     }
-                    return template
-                }
-            });
-            // Removing the last empty entry
-            trash = dataset.pop()
+                    // console.log(stats)
+                    // console.log(key)
+                   dataset[key] = stats
+            }
+        })
+
             return dataset
         })
-}
+    }
+            // let dataset = Object.assign({}, ...temporary.map(d => {
+            //     // console.log(d)
+            //     info = d.split('\t')
+            //     // console.log(info)
+            //     if (info.length > 1) {
+            //         let key = info[1].toLowerCase()
+            //         var stats = {
+            //             chromosome: info[0],
+            //             start: info[2],
+            //             end: info[3],
+            //             key: key,
+            //             ortholog: false,
+            //             siblings: [],
+            //         }
+            //         console.log(stats)
+            //         console.log(key)
+            //         var template = { [key]: stats }
+            //         // console.log(template)
+            //         return template
+            //     }
+            //     else{
+            //         return
+            //     }
+        //     })
+        //     )
+        //     return dataset
+        //     // dataset = temporary.map(function (d) {
+        //     //     info = d.split('\t')
+        //     //     if (info.length > 1) {
+        //     //         var template = {
+        //     //             chromosome: info[0],
+        //     //             start: info[2],
+        //     //             end: info[3],
+        //     //             key: info[1].toLowerCase(),
+        //     //             ortholog: false,
+        //     //             siblings: [],
+        //     //         }
+        //     //         return template
+        //     //     }
+        //     // });
+        //     // Removing the last empty entry
+        //     //     trash = dataset.pop()
+        //     //     return dataset
+//         })
+
+// }
 
 // Used for drawing areas containing a number of genes vs each individual gene
 class densityViewData {
@@ -387,8 +443,8 @@ class densityViewData {
 
 class gene {
 
-    constructor(geneInfo,height) {
-    // constructor(start, end, chromosome, key, height) {
+    constructor(geneInfo, height) {
+        // constructor(start, end, chromosome, key, height) {
         this.start = geneInfo.start;
         this.end = geneInfo.end;
         this.chromosome = geneInfo.chromosome;
@@ -412,16 +468,16 @@ class gene {
             this.siblings.forEach(sibling => {
 
                 let siblingSource;
- 
+
                 var sourceCheck = sibling.toLowerCase()
-   
+
 
                 var sourceDesignation = sourceCheck.slice(0, sourceCheck.indexOf('g'))
-    
+
                 siblingSource = genomeModel.chromosomeNameList.findIndex((d) => {
                     return d.designation == sourceDesignation
                 })
-              
+
                 let siblingLocation = siblingSource
 
                 if (siblingLocation == location) {
@@ -469,8 +525,8 @@ class gene {
                 if (this.ortholog) {
                     divText += "<br/>Orthologs: " + this.siblings.length
                     this.siblings.forEach(item => {
-                
-                            divText += "<br/>" + item
+
+                        divText += "<br/>" + item
                     })
                 }
                 selectedInfo = createDiv(divText)
@@ -660,7 +716,6 @@ class View {
 
                 genomeModel.selectedGene.getOrthologs().forEach(x => {
                     let target = genomeModel.searchForGene(x)
-                    debugger
                     orthologs.push(target)
                 })
             }
