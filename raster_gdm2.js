@@ -372,56 +372,10 @@ function pullInfo(genomeFile) {
                    dataset[key] = stats
             }
         })
-
             return dataset
         })
     }
-            // let dataset = Object.assign({}, ...temporary.map(d => {
-            //     // console.log(d)
-            //     info = d.split('\t')
-            //     // console.log(info)
-            //     if (info.length > 1) {
-            //         let key = info[1].toLowerCase()
-            //         var stats = {
-            //             chromosome: info[0],
-            //             start: info[2],
-            //             end: info[3],
-            //             key: key,
-            //             ortholog: false,
-            //             siblings: [],
-            //         }
-            //         console.log(stats)
-            //         console.log(key)
-            //         var template = { [key]: stats }
-            //         // console.log(template)
-            //         return template
-            //     }
-            //     else{
-            //         return
-            //     }
-        //     })
-        //     )
-        //     return dataset
-        //     // dataset = temporary.map(function (d) {
-        //     //     info = d.split('\t')
-        //     //     if (info.length > 1) {
-        //     //         var template = {
-        //     //             chromosome: info[0],
-        //     //             start: info[2],
-        //     //             end: info[3],
-        //     //             key: info[1].toLowerCase(),
-        //     //             ortholog: false,
-        //     //             siblings: [],
-        //     //         }
-        //     //         return template
-        //     //     }
-        //     // });
-        //     // Removing the last empty entry
-        //     //     trash = dataset.pop()
-        //     //     return dataset
-//         })
-
-// }
+           
 
 // Used for drawing areas containing a number of genes vs each individual gene
 class densityViewData {
